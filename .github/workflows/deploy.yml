@@ -42,49 +42,35 @@ jobs:
 
           echo "1️⃣  Bootstrap/update repo and public/ folder"
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-            set -xe
-            echo "📂 Ensuring /apps/app1 exists"
-            mkdir -p /apps/app1
-
-            echo "📁 Entering /apps/app1"
-            cd /apps/app1
-
-            if [ ! -d .git ]; then
-              echo "🔄 Cloning repo for the first time"
-              git clone https://github.com/fikesoft/VPS-TEST.git .
-            else
-              echo "⬇️ Fetching latest"
-              git fetch --all
-              echo "🔧 Resetting to origin/main"
-              git reset --hard origin/main
-            fi
-
-            echo "📂 Ensuring public folder"
-            mkdir -p public
-          EOF || { echo "❌ Step 1 failed"; exit 1; }
+          set -xe
+          echo "📂 Ensuring /apps/app1 exists"
+          mkdir -p /apps/app1
+          echo "📁 Entering /apps/app1"
+          cd /apps/app1
+          if [ ! -d .git ]; then
+            echo "🔄 Cloning repo"
+            git clone https://github.com/fikesoft/VPS-TEST.git .
+          else
+            echo "⬇️  Fetch + reset"
+            git fetch --all
+            git reset --hard origin/main
+          fi
+          echo "📂 Ensuring public folder"
+          mkdir -p public
+          EOF
 
           echo "2️⃣  Copying build artifacts"
           scp -o StrictHostKeyChecking=no -r client/dist/* \
-            root@31.97.53.175:/apps/app1/public \
-            || { echo "❌ SCP failed"; exit 1; }
-          echo "✅ Artifacts copied."
+            root@31.97.53.175:/apps/app1/public
 
-          echo "3️⃣  Restarting Docker container and reloading Nginx"
+          echo "3️⃣  Restarting containers & reloading Nginx"
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-            set -xe
-
-            # Restart the app container
-            echo "🐳 Restarting container 'app1-container'"
-            docker container restart app1-container
-
-            # Reload host Nginx to pick up any changed configs or static files
-            echo "🔄 Testing Nginx configuration"
-            nginx -t
-
-            echo "🔁 Reloading Nginx"
-            systemctl reload nginx
-
-            exit 0
-          EOF || { echo "❌ Container/Nginx reload failed"; exit 1; }
-
+          set -xe
+          echo "🐳 Restarting container 'app1-container'"
+          docker container restart app1-container
+          echo "🔄 Testing Nginx config"
+          nginx -t
+          echo "🔁 Reloading Nginx"
+          systemctl reload nginx
+          EOF
           echo "🎉 Deploy complete!"
