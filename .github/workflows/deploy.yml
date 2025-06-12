@@ -38,39 +38,20 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          echo "🚀 Starting deploy…"
+          echo "1️⃣  Bootstrapping…"
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 \
+            "mkdir -p /apps/app1 && \
+             cd /apps/app1 && \
+             [ ! -d .git ] && git clone https://github.com/fikesoft/VPS-TEST.git . || \
+             (git fetch --all && git reset --hard origin/main) && \
+             mkdir -p dist"
 
-          echo "1️⃣  Bootstrap/update repo and public/ folder"
-          ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-          set -xe
-          echo "📂 Ensuring /apps/app1 exists"
-          mkdir -p /apps/app1
-          echo "📁 Entering /apps/app1"
-          cd /apps/app1
-          if [ ! -d .git ]; then
-            echo "🔄 Cloning repo"
-            git clone https://github.com/fikesoft/VPS-TEST.git .
-          else
-            echo "⬇️  Fetch + reset"
-            git fetch --all
-            git reset --hard origin/main
-          fi
-          echo "📂 Ensuring public folder"
-          mkdir -p public
-          EOF
-
-          echo "2️⃣  Copying build artifacts"
+          echo "2️⃣  Copying build artifacts to dist…"
           scp -o StrictHostKeyChecking=no -r client/dist/* \
-            root@31.97.53.175:/apps/app1/public
+            root@31.97.53.175:/apps/app1/dist
 
-          echo "3️⃣  Restarting containers & reloading Nginx"
-          ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-          set -xe
-          echo "🐳 Restarting container 'app1-container'"
-          docker container restart app1-container
-          echo "🔄 Testing Nginx config"
-          nginx -t
-          echo "🔁 Reloading Nginx"
-          systemctl reload nginx
-          EOF
+          echo "3️⃣  Restarting container & reloading Nginx…"
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 \
+            "docker container restart app1-container && nginx -t && systemctl reload nginx"
+
           echo "🎉 Deploy complete!"
