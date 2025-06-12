@@ -32,6 +32,7 @@ jobs:
 
       - name: Deploy to VPS
         run: |
+          # 1) Bootstrap or update the git repo & public/ folder
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
             mkdir -p /apps/app1
             cd /apps/app1
@@ -46,9 +47,17 @@ jobs:
             mkdir -p public
           EOF
 
+          # 2) Copy over the freshly built assets
           scp -o StrictHostKeyChecking=no -r client/dist/* \
             root@31.97.53.175:/apps/app1/public
 
-          # **Reload Nginx** so it serves the new files immediately
-          ssh -o StrictHostKeyChecking=no root@31.97.53.175 \
-            "nginx -t && systemctl reload nginx"
+          # 3) Recreate your Docker service so it picks up the new files
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
+            cd /apps/app1
+
+            # If you use docker-compose:
+            docker-compose up -d --force-recreate web
+
+            # Or, if you run a single container:
+            # docker container restart my_app_container_name
+          EOF
