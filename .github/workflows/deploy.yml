@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install & build client
+        working-directory: client
+        run: |
+          npm ci
+          npm run build   # o el script que tengas
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Test SSH connection
+        run: ssh -o StrictHostKeyChecking=no root@31.97.53.175 "echo SSH OK"
+
+      - name: Deploy to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
+            cd /ruta/de/tu/app
+            git fetch --all
+            git reset --hard origin/main
+            # si sirves archivos estáticos desde client/dist:
+            rm -rf public
+            mkdir -p public
+            exit
+          EOF
+          # Luego copia los artefactos build a tu VPS:
+          scp -o StrictHostKeyChecking=no -r client/dist/* root@31.97.53.175:/ruta/de/tu/app/public
