@@ -25,6 +25,12 @@ jobs:
           npm run build
           echo "✅ Client build complete."
 
+      - name: Inspect build output
+        working-directory: client
+        run: |
+          echo "🔍 client/dist contents:"
+          ls -R dist
+
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.9.1
         with:
@@ -42,16 +48,36 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 \
             "mkdir -p /apps/app1 && \
              cd /apps/app1 && \
-             [ ! -d .git ] && git clone https://github.com/fikesoft/VPS-TEST.git . || \
-             (git fetch --all && git reset --hard origin/main) && \
+             if [ ! -d .git ]; then \
+               git clone https://github.com/fikesoft/VPS-TEST.git .; \
+             else \
+               git fetch --all && git reset --hard origin/main; \
+             fi && \
              mkdir -p dist"
 
           echo "2️⃣  Copying build artifacts to dist…"
           scp -o StrictHostKeyChecking=no -r client/dist/* \
             root@31.97.53.175:/apps/app1/dist
 
-          echo "3️⃣  Restarting container & reloading Nginx…"
+      - name: Verify files on VPS
+        run: |
+          echo "🖥️  Checking /apps/app1/dist on server…"
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 \
-            "docker container restart app1-container && nginx -t && systemctl reload nginx"
+            "ls -l /apps/app1/dist | head -n 20"
 
+      - name: Restart container & reload Nginx
+        run: |
+          echo "3️⃣  Restarting container & reloading Nginx…"
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
+            set -xe
+            echo "🐳 Restarting container 'app1-container'"
+            docker container restart app1-container
+            echo "🔄 Testing Nginx configuration"
+            nginx -t
+            echo "🔁 Reloading Nginx"
+            systemctl reload nginx
+          EOF
+
+      - name: Deploy complete
+        run: |
           echo "🎉 Deploy complete!"
