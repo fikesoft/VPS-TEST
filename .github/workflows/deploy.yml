@@ -1,5 +1,3 @@
-name: Deploy to VPS
-
 on:
   push:
     branches:
@@ -22,25 +20,36 @@ jobs:
         working-directory: client
         run: |
           npm ci
-          npm run build   # o el script que tengas
+          npm run build
 
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Test SSH connection
         run: ssh -o StrictHostKeyChecking=no root@31.97.53.175 "echo SSH OK"
 
       - name: Deploy to VPS
         run: |
+          # 1) Prepare the app directory & repo on the server
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-            cd /ruta/de/tu/app
-            git fetch --all
-            git reset --hard origin/main
-            # si sirves archivos estáticos desde client/dist:
-            rm -rf public
+            mkdir -p /apps/app1
+            cd /apps/app1
+
+            if [ ! -d .git ]; then
+              # First‐time clone
+              git clone https://github.com/fikesoft/VPS-TEST.git .
+            else
+              # Update existing checkout
+              git fetch --all
+              git reset --hard origin/main
+            fi
+
+            # Ensure the public folder exists
             mkdir -p public
-            exit
           EOF
-          # Luego copia los artefactos build a tu VPS:
-          scp -o StrictHostKeyChecking=no -r client/dist/* root@31.97.53.175:/ruta/de/tu/app/public
+
+          # 2) Copy the built client assets into public/
+          scp -o StrictHostKeyChecking=no -r client/dist/* \
+            root@31.97.53.175:/apps/app1/public
