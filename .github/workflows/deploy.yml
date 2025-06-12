@@ -19,8 +19,11 @@ jobs:
       - name: Install & build client
         working-directory: client
         run: |
+          echo "🔧 Installing dependencies..."
           npm ci
+          echo "🔧 Building client..."
           npm run build
+          echo "✅ Client build complete."
 
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.9.1
@@ -28,33 +31,60 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Test SSH connection
-        run: ssh -o StrictHostKeyChecking=no root@31.97.53.175 "echo SSH OK"
+        run: |
+          echo "🔌 Testing SSH connection..."
+          ssh -o StrictHostKeyChecking=no root@31.97.53.175 "echo SSH OK"
+          echo "✅ SSH connection OK."
 
       - name: Deploy to VPS
         run: |
-          # 1) Bootstrap or update the git repo & public/ folder
+          echo "🚀 Starting deploy…"
+
+          echo "1️⃣  Bootstrap/update repo and public/ folder"
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
+            set -xe
+            echo "📂 Ensuring /apps/app1 exists"
             mkdir -p /apps/app1
+
+            echo "📁 Entering /apps/app1"
             cd /apps/app1
 
             if [ ! -d .git ]; then
+              echo "🔄 Cloning repo for the first time"
               git clone https://github.com/fikesoft/VPS-TEST.git .
             else
+              echo "⬇️ Fetching latest"
               git fetch --all
+              echo "🔧 Resetting to origin/main"
               git reset --hard origin/main
             fi
 
+            echo "📂 Ensuring public folder"
             mkdir -p public
-          EOF
+          EOF || { echo "❌ Step 1 failed"; exit 1; }
 
-          # 2) Copy over the freshly built assets
+          echo "2️⃣  Copying build artifacts"
           scp -o StrictHostKeyChecking=no -r client/dist/* \
-            root@31.97.53.175:/apps/app1/public
+            root@31.97.53.175:/apps/app1/public \
+            || { echo "❌ SCP failed"; exit 1; }
+          echo "✅ Artifacts copied."
 
-          # 3) Recreate your Docker service so it picks up the new files
+          echo "3️⃣  Restarting Docker container and reloading Nginx"
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
-            cd /apps/app1
+            set -xe
 
-            # Or, if you run a single container:
+            # Restart the app container
+            echo "🐳 Restarting container 'app1-container'"
             docker container restart app1-container
-          EOF
+
+            # Reload host Nginx to pick up any changed configs or static files
+            echo "🔄 Testing Nginx configuration"
+            nginx -t
+
+            echo "🔁 Reloading Nginx"
+            systemctl reload nginx
+
+            exit 0
+          EOF || { echo "❌ Container/Nginx reload failed"; exit 1; }
+
+          echo "🎉 Deploy complete!"
