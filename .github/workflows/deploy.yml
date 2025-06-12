@@ -55,9 +55,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@31.97.53.175 << 'EOF'
             cd /apps/app1
 
-            # If you use docker-compose:
-            docker-compose up -d --force-recreate web
-
             # Or, if you run a single container:
-            # docker container restart app1-container
+            docker container restart app1-container
           EOF
