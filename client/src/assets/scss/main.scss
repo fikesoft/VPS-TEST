@@ -1,0 +1,9 @@
+@use './reboot' as *;
+
+body{
+background: linear-gradient(
+    135deg,
+    #2C1250 0%,    /* almost–black purple */
+    #4F228D 33%,   /* mid–purple */
+    #e0dbdb 100%   /* very dark anchor */
+  );}
