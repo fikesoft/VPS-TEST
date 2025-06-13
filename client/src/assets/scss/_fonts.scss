@@ -1,0 +1,165 @@
+@use "sass:math";
+@use "sass:map";
+@import url('https://fonts.googleapis.com/css2?family=Preahvihear&display=swap');
+
+// 1) Bootstrap breakpoints
+$breakpoints: (
+  'sm': 576px,
+  'md': 768px,
+  'lg': 992px,
+  'xl': 1200px,
+  'xxl': 1400px,
+);
+
+// 2) Font families
+$font-families: (
+  'primary': 'Preahvihear',
+);
+
+// 3) Font weights
+$font-weights: (
+  'regular':   400,
+  'medium':    500,
+  'demi-bold': 600,
+  'bold':      700,
+);
+
+// 4) Font sizes (px)
+$font-sizes: (
+  12:  12px,
+  14:  14px,
+  16:  16px,
+  20:  20px,
+  24:  24px,
+  32:  32px,
+  48:  48px,
+);
+
+// 5) rem() helper
+@function rem($px) {
+  @return math.div($px, 16px) * 1rem;
+}
+
+// 6) Breakpoint mixin (Bootstrap style)
+// Usage: @include respond-to('md') { … }
+@mixin respond-to($key) {
+  @if map.has-key($breakpoints, $key) {
+    @media (min-width: map.get($breakpoints, $key)) {
+      @content;
+    }
+  } @else {
+    @error "No breakpoint `#{$key}` in $breakpoints.";
+  }
+}
+
+// 7) Base font mixin
+// Usage: @include font-base(24px, 'bold', #fff);
+@mixin font-base(
+  $size:   16px,
+  $weight: 'regular',
+  $color:  null
+) {
+  font-family: map.get($font-families, 'primary'), sans-serif;
+  font-size:   rem($size);
+  font-weight: map.get($font-weights, $weight);
+
+  @if $color {
+    color: $color;
+  }
+}
+
+// 8) Component‐level styles with responsive overrides
+
+.title-display {
+  @include font-base(36px, 'medium');
+  @include respond-to('md') {
+    @include font-base(64px, 'medium');
+  }
+}
+
+.h1 {
+  @include font-base(32px, 'bold');
+  @include respond-to('md') {
+    @include font-base(48px, 'bold');
+  }
+}
+
+.h2 {
+  @include font-base(24px, 'demi-bold');
+  @include respond-to('md') {
+    @include font-base(36px, 'demi-bold');
+  }
+}
+
+.h3 {
+  @include font-base(20px, 'medium');
+  @include respond-to('md') {
+    @include font-base(32px, 'medium');
+  }
+}
+
+.h4 {
+  @include font-base(18px, 'medium');
+  @include respond-to('md') {
+    @include font-base(24px, 'medium');
+  }
+}
+
+.h5 {
+  @include font-base(16px, 'regular');
+  @include respond-to('md') {
+    @include font-base(20px, 'regular');
+  }
+}
+
+.h6 {
+  @include font-base(14px, 'regular');
+  @include respond-to('md') {
+    @include font-base(18px, 'regular');
+  }
+}
+
+.paragraph {
+  @include font-base(16px, 'regular');
+}
+
+.paragraph-small {
+  @include font-base(14px, 'regular', rgba(255, 255, 255, 0.7));
+}
+
+.caption {
+  @include font-base(12px, 'regular', rgba(255, 255, 255, 0.7));
+}
+
+// 9) Utility classes
+
+// font-weight utilities: .fw-regular, .fw-bold, etc.
+@each $name, $val in $font-weights {
+  .fw-#{$name} {
+    font-weight: $val !important;
+  }
+}
+
+// font-size utilities: .fs-12, .fs-24, etc.
+@each $size, $px in $font-sizes {
+  .fs-#{$size} {
+    font-size: rem($px) !important;
+  }
+}
+
+// responsive font-size utilities: .fs-md-16, .fs-lg-32, etc.
+@each $bp, $min in $breakpoints {
+  @media (min-width: $min) {
+    @each $sz, $px in $font-sizes {
+      .fs-#{$bp}-#{$sz} {
+        font-size: rem($px) !important;
+      }
+    }
+  }
+}
+
+// 10) Global defaults
+
+body {
+  @include font-base(16px, 'regular', #fff);
+}

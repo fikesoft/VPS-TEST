@@ -1,0 +1,48 @@
+@use "sass:map";
+
+// 1) Define your color groups
+
+$purple: (
+  // brightest of your four stops
+  'light':        #693B93,  // magenta–purple
+  'light-hover':  #7D66A3,  // ~light +10%
+  'light-active': #9179B4,  // ~light +20%
+
+  // your mid-point
+  'normal':       #4F228D,  // mid–purple
+  'normal-hover': #65339F,  // ~normal +15%
+  'normal-active':#3C186E,  // ~normal –15%
+
+  // your darker stops
+  'dark':         #2C1250,  // almost–black purple
+  'dark-hover':   #564173,  // ~dark +20%
+  'dark-active':  #281048,  // ~dark –10%
+
+  // your absolute anchor
+  'darker':       #251C31,  // deepest purple
+);
+
+$text: (
+  'base':   #ffffff,        // main text
+  'muted':  #D9D9D9,        // secondary text
+  'subtle': rgba(255,255,255,0.7), // tertiary text
+);
+
+// 2) Collect into master map
+$all-colors: (
+  'purple': $purple,
+  'text':   $text,
+);
+
+// 3) Helper to grab any color
+@function color($group, $shade) {
+  $grp: map.get($all-colors, $group);
+  @if $grp == null {
+    @error "Unknown color group `#{$group}` in \$all-colors.";
+  }
+  $val: map.get($grp, $shade);
+  @if $val == null {
+    @error "Unknown shade `#{$shade}` in color group `#{$group}`.";
+  }
+  @return $val;
+}

@@ -4,13 +4,11 @@ import { Outlet } from "react-router-dom";
 
 // adjust this path to wherever jsrepo dropped Aurora
 import Aurora from "../blocks/Backgrounds/Aurora/Aurora";
+import Header from "../sections/Header/Header";
 
 const MainLayout: React.FC = () => {
   return (
-    <div
-      style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}
-    >
-      {/* 1) Aurora itself, fixed full-screen */}
+    <div className="container mt-4 mb-4 position-relative min-vh-100 overflow-hidden">
       <Aurora
         colorStops={[
           "#2C1250", // almost–black purple
@@ -18,30 +16,20 @@ const MainLayout: React.FC = () => {
           "#693B93", // brighter magenta-purple
           "#251C31", // anchor back to very dark
         ]}
-        blend={0.7}
+        blend={0.2}
         amplitude={1}
         speed={1}
       />
 
       {/* 2) Your actual page content, positioned above Aurora */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-        }}
-      >
-        <header>
-          <h1>My Site</h1>
-        </header>
+      <div className="d-flex flex-column position-relative z-2 min-vh-100">
+        <Header />
 
         <main style={{ flex: 1 }}>
           <Outlet />
         </main>
 
-        <footer>{/* footer if you have one */}</footer>
+        <footer></footer>
       </div>
     </div>
   );
