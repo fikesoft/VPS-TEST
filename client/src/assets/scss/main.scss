@@ -5,9 +5,13 @@
 
 
 body{
-background: linear-gradient(
-    135deg,
-    #2C1250 0%,    /* almost–black purple */
-    #4F228D 33%,   /* mid–purple */
-    #e0dbdb 66%,   /* very dark anchor */
-  );}
+  background: linear-gradient(
+      135deg,
+      #2C1250 0%,    /* almost–black purple */
+      #4F228D 33%,   /* mid–purple */
+      #e0dbdb 66%,   /* very dark anchor */
+    );  
+section{
+  margin-top: 50px;
+}
+}

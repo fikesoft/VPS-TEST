@@ -1,0 +1,14 @@
+@use '../../assets/scss/colors' as colors;
+.wrapperHome{
+
+.customH1{
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+}
+.homeImg{
+    max-width: 456px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+}
